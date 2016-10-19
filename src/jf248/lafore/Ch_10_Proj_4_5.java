@@ -78,7 +78,7 @@ public class Ch_10_Proj_4_5 {
     public int insertItem(DataItem newItem) {
 
       if (isFull()) {
-        Tree23.split(this, newItem)
+        Tree23.split(this, newItem);
       }
 
       numItems++;
