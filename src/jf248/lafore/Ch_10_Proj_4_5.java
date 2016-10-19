@@ -22,7 +22,7 @@ public class Ch_10_Proj_4_5 {
   }
 
   class Node {
-    private static final int ORDER = 3;
+    public static final int ORDER = 3;
     private int numItems;
     private Node parent;
     private Node childArray[] = new Node[ORDER];
@@ -77,15 +77,20 @@ public class Ch_10_Proj_4_5 {
 
     public int insertItem(DataItem newItem) {
 
+      if (isFull()) {
+        Tree23.split(this, newItem)
+      }
+
       numItems++;
       long newKey = newItem.dData;
 
       for (int j = ORDER - 2; j >= 0; j--) {
         if (itemArray[j] != null) {
           long itsKey = itemArray[j].dData;
-          if (newKey < itsKey)
+          if (newKey < itsKey) {
             itemArray[j + 1] = itemArray[j];
-          else {
+            childArray[j + 2] = childArray[j + 1];
+          } else {
             itemArray[j + 1] = newItem;
             return j + 1;
           }
@@ -133,7 +138,7 @@ public class Ch_10_Proj_4_5 {
       DataItem tempItem = new DataItem(dValue);
 
       // go to leaf
-      while (!curNode.isLeaf() {
+      while (!curNode.isLeaf()) {
         curNode = getNextChild(curNode, dValue);
       }
 
@@ -141,8 +146,11 @@ public class Ch_10_Proj_4_5 {
       if (curNode.isFull()) {
         split(curNode, tempItem);
       } else {
-        curNode.insertItem()
+        curNode.insertItem(tempItem);
       }
+
+      System.out.println("Inserted " + dValue);
+      displayTree();
 
       // Code from Tree234
 //      while (true) {
@@ -163,9 +171,43 @@ public class Ch_10_Proj_4_5 {
 
     public void split(Node node, DataItem newItem) {
 
+      // Put node's DataItem's into ordered array along with newItem
+      int maxItems = node.ORDER - 1;
+      DataItem[] arr = new DataItem[maxItems + 1];
+      int j = 0;
+      boolean newItemInserted = false;
+      for (int i = 0; i < maxItems ; i++) {
+        if (node.getItem(i).dData > newItem.dData && !newItemInserted) {
+          arr[j++] = newItem;
+          newItemInserted = true;
+        }
+        arr[j++] = node.getItem(i);
+      }
+      if (!newItemInserted) {
+        arr[maxItems] = newItem;
+      }
 
-
-
+      // remove all items from node
+      // bottom half of arr goes into node; arr[middle] up to parent; upper into new Node
+      int middle =  maxItems / 2;
+      for (int i = 0; i < maxItems; i++) {
+        node.removeItem();
+      }
+      for (int i = 0; i < middle; i++) {
+        node.insertItem(arr[i]);
+      }
+      if (node.getParent() == null) {
+        Node newRoot = new Node();
+        root = newRoot;
+        root.connectChild(0, node);
+      }
+      Node parent = node.getParent();
+      int insertLocation = parent.insertItem(arr[middle]);
+      Node newChild = new Node();
+      parent.connectChild(insertLocation + 1,newChild);
+      for (int i = middle + 1; i < arr.length; i++) {
+        newChild.insertItem(arr[i]);
+      }
 
 //      DataItem itemB, itemC;
 //      Node parent, child2, child3;
@@ -246,6 +288,8 @@ public class Ch_10_Proj_4_5 {
     theTree.insert(60);
     theTree.insert(30);
     theTree.insert(70);
+    theTree.insert(10);
+    theTree.insert(80);
 
 
 
