@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 /**
  * Created by Joshua Freedman on 10/7/2016, based on Lafore Data Structures.
+ * Extended exercise to make B-Tree of any order
  */
 
 public class Ch_10_Proj_4_5 {
@@ -22,7 +23,7 @@ public class Ch_10_Proj_4_5 {
   }
 
   class Node {
-    public static final int ORDER = 3;
+    public static final int ORDER = 4;
     private int numItems;
     private Node parent;
     private Node childArray[] = new Node[ORDER];
@@ -77,10 +78,6 @@ public class Ch_10_Proj_4_5 {
 
     public int insertItem(DataItem newItem) {
 
-      if (isFull()) {
-        Tree23.split(this, newItem);
-      }
-
       numItems++;
       long newKey = newItem.dData;
 
@@ -116,7 +113,7 @@ public class Ch_10_Proj_4_5 {
 
   }
 
-  class Tree23 {
+  class BTree {
 
     private Node root = new Node();
 
@@ -169,7 +166,7 @@ public class Ch_10_Proj_4_5 {
 //      curNode.insertItem(tempItem);
     }
 
-    public void split(Node node, DataItem newItem) {
+    public Node split(Node node, DataItem newItem) {
 
       // Put node's DataItem's into ordered array along with newItem
       int maxItems = node.ORDER - 1;
@@ -188,60 +185,59 @@ public class Ch_10_Proj_4_5 {
       }
 
       // remove all items from node
-      // bottom half of arr goes into node; arr[middle] up to parent; upper into new Node
       int middle =  maxItems / 2;
       for (int i = 0; i < maxItems; i++) {
         node.removeItem();
       }
+
+      // bottom half of arr into node
       for (int i = 0; i < middle; i++) {
         node.insertItem(arr[i]);
       }
+
+      // if root, create new root
       if (node.getParent() == null) {
         Node newRoot = new Node();
         root = newRoot;
         root.connectChild(0, node);
       }
+
+      // middle DataItem into parent. if parent is full recursive call to split
       Node parent = node.getParent();
-      int insertLocation = parent.insertItem(arr[middle]);
-      Node newChild = new Node();
-      parent.connectChild(insertLocation + 1,newChild);
-      for (int i = middle + 1; i < arr.length; i++) {
-        newChild.insertItem(arr[i]);
+      int numChildren = parent.numItems + 1;
+      Node rightParent = null;
+      if (parent.isFull()) {
+        rightParent = split(parent, arr[middle]);
+      } else {
+        parent.insertItem(arr[middle]);
       }
 
-//      DataItem itemB, itemC;
-//      Node parent, child2, child3;
-//      int itemIndex;
-//
-//      itemC = thisNode.removeItem();
-//      itemB = thisNode.removeItem();
-//      child2 = thisNode.disconnectChild(2);
-//      child3 = thisNode.disconnectChild(3);
-//
-//      Node newRight = new Node();
-//
-//      if (thisNode == root) {
-//        root = new Node();
-//        parent = root;
-//        root.connectChild(0, thisNode);
-//      } else
-//        parent = thisNode.getParent();
-//
-//
-//      itemIndex = parent.insertItem(itemB);
-//      int n = parent.getNumItems();
-//
-//      for (int j = n - 1; j > itemIndex; j--) {
-//        Node temp = parent.disconnectChild(j);
-//        parent.connectChild(j + 1, temp);
-//      }
-//
-//      parent.connectChild(itemIndex + 1, newRight);
-//
-//
-//      newRight.insertItem(itemC);
-//      newRight.connectChild(0, child2);
-//      newRight.connectChild(1, child3);
+      // top half of arr into newRight
+      Node newRight = new Node();
+      for (int i = middle + 1; i < arr.length; i++) {
+        newRight.insertItem(arr[i]);
+      }
+
+      // create ordered array of children including newRight
+      Node[] arrNodes = new Node[numChildren + 1];
+      j = 0;
+      for (int i = 0; i < arrNodes.length; i++) {
+        arrNodes[i] = parent.disconnectChild(j++);
+        if (arrNodes[i] == node) {
+          arrNodes[++i] = newRight;
+        }
+      }
+
+      // connect children to parent (and rightParent)
+      j = 0;
+      for (int i = 0; i < arrNodes.length; i++) {
+        if (i <= parent.numItems) {
+          parent.connectChild(i, arrNodes[i]);
+        } else {
+          rightParent.connectChild(j++, arrNodes[i]);
+        }
+      }
+      return newRight;
     }
 
     public Node getNextChild(Node theNode, long theValue) {
@@ -281,7 +277,7 @@ public class Ch_10_Proj_4_5 {
 
     long value;
     Ch_10_Proj_4_5 app = new Ch_10_Proj_4_5();
-    Tree23 theTree = app.new Tree23();
+    BTree theTree = app.new BTree();
 
     theTree.insert(50);
     theTree.insert(40);

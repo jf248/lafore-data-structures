@@ -7,15 +7,7 @@ import java.util.Arrays;
  */
 public class Test {
   public static void main(String[] args) {
-    long[] arr = {4, 5, 6};
-    System.out.println(Arrays.toString(arr));
-  }
-
-  class Wrap {
-    public int i;
-  }
-
-  static void five(Wrap x) {
-    x.i = 5;
+    int i = (int)Math.ceil(Math.log10(99));
+    System.out.println(i);
   }
 }
