@@ -3,4 +3,4 @@ I'm teaching myself some computer science using "Data Structures & Algorithms in
 
 These are my answers to the end-of-chapter projects.
 
-JF.
+JF
