@@ -1,6 +1,5 @@
 package jf248.lafore;
 import java.io.*;
-import java.util.Arrays;
 
 /**
  * Created by Joshua Freedman on 10/7/2016, based on Lafore Data Structures.
