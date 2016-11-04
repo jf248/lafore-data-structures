@@ -1,191 +1,179 @@
 package jf248.lafore;
 import java.io.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 /**
  * Created by Joshua Freedman on 11/2/2016, based on Lafore Data Structures.
  */
 public class Ch_13_Proj_5 {
 
-
-  class StackX {
-    private final int SIZE = 20;
-    private int[] st;
-    private int top;
-
-    public StackX() {
-      st = new int[SIZE];
-      top = -1;
-    }
-
-    public void push(int j) {
-      st[++top] = j;
-    }
-
-    public int pop() {
-      return st[top--];
-    }
-
-    public int peek() {
-      return st[top];
-    }
-
-    public boolean isEmpty() {
-      return (top == -1);
-    }
-
-  }
-
   class Vertex {
-    public char label;
+    public int location;
+    public boolean isNew;
     public boolean wasVisited;
-    public boolean hasKnight;
+    public LinkedList<Vertex> adjList;
 
-    public Vertex() {
-      wasVisited = false;
+    public Vertex(int location) {
+      this.location = location;
+      adjList = new LinkedList<>();
+      isNew = true;
+    }
+
+    public Vertex findUnvisited() {
+      for (ListIterator<Vertex> iter = adjList.listIterator(); iter.hasNext(); ) {
+        Vertex v = iter.next();
+        if (!v.wasVisited) {
+          return v;
+        }
+      }
+      return null;
     }
 
   }
 
-  class Graph {
-    private int boardSize;
-    private int maxVerts;
-    private Vertex vertexList[];
-    private int adjMat[][];
-    private int nVerts;
-    private StackX theStack;
-
-    public Graph(int boardSize) {
-      this.boardSize = boardSize;
-      maxVerts = boardSize * boardSize;
-      vertexList = new Vertex[maxVerts];
-
-      adjMat = new int[maxVerts][maxVerts];
-      nVerts = 0;
-      for (int y = 0; y < maxVerts; y++)
-        for (int x = 0; x < maxVerts; x++)
-          adjMat[x][y] = 0;
-      theStack = new StackX();
+  class Board {
+    private int sideLength;
+//    private int nSquares;
+//    private LinkedList<Vertex> vertexList;
+    private LinkedList<Vertex> pathStack;
+    public boolean[] hasKnight;
+    
+    public Board(int sideLength) {
+      this.sideLength = sideLength;
+      hasKnight = new boolean[sideLength * sideLength];
+//      vertexList = new LinkedList<>();
+      pathStack = new LinkedList<>();
     }
 
-    public void addVertex() {
-      vertexList[nVerts++] = new Vertex();
+    public void doKnightTour() throws IOException {
+      // only go halfway across row or column, symmetry
+      int halfWay = sideLength / 2;
+      for (int i = 0; i < halfWay; i++) {
+        for (int j = 0; j < halfWay; j++) {
+          int l = i * sideLength + j;
+          doKnightTour(l);
+        }
+      }
     }
 
-    public void addEdge(int start, int end) {
-      adjMat[start][end] = 1;
-      adjMat[end][start] = 1;
-    }
+    public void doKnightTour (int start) throws IOException {
 
-    public void displayVertex(int v) {
-      System.out.print(vertexList[v].label);
-    }
+      // used to display progress
+      final long INCREMENT = 100;
+      boolean branched = true;
+      int pathsTried = 1;
 
-    public void dfs(int index) throws IOException {
-      int stackHeight = 0;
-      vertexList[index].wasVisited = true;
-      vertexList[index].hasKnight = true;
-      theStack.push(index);
-      stackHeight++;
+      System.out.println("Starting from square: " + start);
 
-      while (!theStack.isEmpty()) {
+      // add start Vertex, add adjacent Vertices, mark on board, push on the stack
+      Vertex v = new Vertex(start);
+      addAdjacentVertices(v);
+      hasKnight[v.location] = true;
+      pathStack.push(v);
 
-        int v = getAdjUnvisitedVertex(theStack.peek());
-        if (v == -1) {
-          int  r = theStack.pop();
-          vertexList[r].hasKnight = false;
-          stackHeight--;
+      while (!pathStack.isEmpty()) {
+        if (pathStack.size() == sideLength * sideLength) {
+          printSolution();
+        }
+
+        v = pathStack.peek().findUnvisited();
+        if (v == null) {
+          branched = true;
+          v = pathStack.pop();
+          hasKnight[v.location] = false;
         } else {
-          vertexList[v].wasVisited = true;
-          vertexList[v].hasKnight = true;
-
-          theStack.push(v);
-          stackHeight++;
-          if (stackHeight == maxVerts) {
-            // solved
-            System.out.println("Solved: ");
-            while (!theStack.isEmpty()) {
-              System.out.print((theStack.pop() + 1) + " ");
+          if (branched) {
+            // update n. of paths tried
+            pathsTried++;
+            if (pathsTried % INCREMENT == 0) {
+              System.out.println("  Paths tried: " + pathsTried);
             }
+            branched = false;
           }
 
+          // mark as visited, find next moves
+          v.wasVisited = true;
+          hasKnight[v.location] = true;
+          if (v.isNew) {
+            v.isNew = false;
+            addAdjacentVertices(v);
+          }
+
+          pathStack.push(v);
+          
+//          // display board and pause
+//          for (int i = 0; i < sideLength * sideLength; i++) {
+//            if (hasKnight[i]) {
+//              System.out.printf("X");
+//            } else {
+//              System.out.printf("-");
+//            }
+//            if ((i + 1) % sideLength == 0 ) {
+//              System.out.println();
+//            }
+//          }
+//          getString();
         }
       }
+      System.out.println("No solution.");
 
+    }
 
-      for (int j = 0; j < nVerts; j++) {
-        vertexList[j].wasVisited = false;
-        vertexList[j].hasKnight = false;
+    public void printSolution() {
+      System.out.println("Found solution: ");
+      for (int i = 0; i < sideLength * sideLength; i++) {
+        System.out.printf(pathStack.pop().location + " ");
       }
+      System.exit(0);
     }
 
-    public void displayBoard() {
-      for (int i = 0; i < nVerts; i++) {
-        if (vertexList[i].hasKnight) {
-          System.out.print('X');
-        } else {
-          System.out.print("-");
-        }
-        System.out.print(" ");
-        if ((i + 1 )% boardSize == 0) {
-          System.out.println();
-        }
-      }
-    }
-
-    public int getAdjUnvisitedVertex(int v) {
-      for (int j = 0; j < nVerts; j++)
-        if (adjMat[v][j] == 1 && vertexList[j].wasVisited == false)
-          return j;
-      return -1;
-    }
-
-    public String getString() throws IOException {
+    private String getString() throws IOException {
       InputStreamReader isr = new InputStreamReader(System.in);
       BufferedReader br = new BufferedReader(isr);
       String s = br.readLine();
       return s;
     }
 
+    private void addAdjacentVertices(Vertex v) {
+      
+      // find valid Knight moves (i.e on board, !hasKnight)
+      int[] rowMove = {-2, -1, +1, +2, +2, +1, -1, -2};
+      int[] colMove = {+1, +2, +2, +1, -1, -2, -2, -1};
+      int[] n = new int[8];
+      Arrays.fill(n, -1);
+      int row = v.location / sideLength;
+      int col = v.location % sideLength;
+      for (int i = 0; i < 8; i++) {
+        int newRow = row + rowMove[i];
+        int newCol = col + colMove[i];
+        int newLocation = newRow * sideLength + newCol;
+        if (newRow > -1 && newRow < sideLength
+              && newCol > -1 && newCol < sideLength
+              && !hasKnight[newLocation]) {
+          n[i] = newLocation;
+        }
+      }
+
+      // add Vertices
+      for (int i = 0; i < 8; i++) {
+        if (n[i] != -1) {
+          Vertex x = new Vertex(n[i]);
+          v.adjList.push(x);
+        }
+      }
+      
+      // mark !isNew
+      v.isNew = false;
+
+    }
   }
 
-    public static void main(String[] args) throws IOException {
-      final int BOARD_SIZE = 5;
-      Ch_13_Proj_5 app = new Ch_13_Proj_5();
-      Graph theGraph = app.new Graph(BOARD_SIZE);
-
-
-      // Create verticies
-      int count  = 1;
-      for (int i = 0; i < BOARD_SIZE ; i++) {
-        for (int j = 0; j < BOARD_SIZE; j++) {
-          theGraph.addVertex();
-        }
-      }
-
-      // Add edges from top left vertex, along columns then rows
-      for (int i = 0; i < theGraph.nVerts; i++) {
-        int row = i / BOARD_SIZE;
-        int col = i % BOARD_SIZE;
-        int[] rowMove = {1, 1, 2, 2};
-        int[] colMove = {2, -2, 1, -1};
-        int newRow;
-        int newCol;
-        for (int j = 0; j < 3; j++) {
-          newRow = row + rowMove[j];
-          newCol = col + colMove[j];
-          if (newRow > -1 && newCol > -1
-                 && newRow < BOARD_SIZE && newCol <BOARD_SIZE){
-            int end  = newRow * BOARD_SIZE + newCol;
-            theGraph.addEdge(i, end);
-          }
-        }
-
-      }
-
-      for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-        System.out.println("Trying starting from square " + (i + 1));
-        theGraph.dfs(i);
-      }
-    }
+  public static void main(String[] args) throws IOException {
+    Ch_13_Proj_5 app = new Ch_13_Proj_5();
+    Board b = app.new Board(8);
+    b.doKnightTour();
+  }
 
 }
