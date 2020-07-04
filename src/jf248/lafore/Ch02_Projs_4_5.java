@@ -83,7 +83,7 @@ class OrdArray
 	      		l=j+1;
 	      	else u=j-1;						//it's in lower half
 	      }
-	      if(j == nElems-1 || value > a[j]) j++;			//increment j if value larger than all existing
+	      if(value > a[j]) j++;			//increment j if value larger than all existing
 	      
 	      for(int k=nElems; k>j; k--)    // move bigger ones up
 	         a[k] = a[k-1];
